@@ -1,0 +1,133 @@
+version: "3.9"
+
+services:
+  app:
+    build: .
+    container_name: inventory_app
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+    volumes:
+      - .:/var/www/html
+    env_file:
+      - .env
+    depends_on:
+      - db
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-retries: 5
+        loki-batch-size: 400
+
+  db:
+    image: mysql:8.0
+    container_name: inventory_db
+    restart: unless-stopped
+    environment:
+      MYSQL_DATABASE: inventory_db
+      MYSQL_USER: inventory_user
+      MYSQL_PASSWORD: ${DB_PASS}
+      MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+
+    logging:
+      driver: loki
+      options:
+        loki-url: "http://localhost:3100/loki/api/v1/push"
+        loki-retries: 5
+        loki-batch-size: 400
+
+  prometheus:
+    container_name: prometheus
+    image: prom/prometheus
+    restart: unless-stopped
+    volumes:
+      - 'prometheus_data:/prometheus'
+      - './config-monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml'
+      - './alert-rule/alert_rules.yml:/etc/prometheus/alert_rules.yml'
+    networks:
+      - monitoring
+    ports:
+      - 9090:9090
+
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:latest
+    container_name: cadvisor
+    restart: unless-stopped
+    ports:
+      - 8082:8080
+    networks:
+      - monitoring
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+
+  grafana:
+    container_name: grafana-docker
+    image: grafana/grafana
+    restart: unless-stopped
+    volumes:
+      - 'grafana_data:/var/lib/grafana'
+    networks:
+      - monitoring
+    ports:
+      - 3000:3000
+
+  loki:
+    image: grafana/loki
+    container_name: loki-logging
+    restart: unless-stopped
+    command: -config.file=/etc/loki/loki-config.yml
+    ports:
+      - 3100:3100
+    volumes:
+      - ./config-logging/loki:/etc/loki
+    networks:
+      - monitoring
+
+  promtail:
+    image: grafana/promtail
+    container_name: promtail-logging
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./config-logging/promtail:/etc/promtail
+      - /var/log:/var/log
+    networks:
+      - monitoring
+
+  alertmanager:
+    image: prom/alertmanager:main
+    container_name: alertmanager
+    restart: unless-stopped
+    volumes:
+      - ./config-monitoring/alertmanager/alertmanager.yml:/etc/alertmanager/alertmanager.yml
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+    ports:
+      - 9093:9093
+    networks:
+      - monitoring
+
+volumes:
+  mysql_data:
+    name: mysql_data
+    driver: local
+
+  prometheus_data:
+    name: prometheus_data
+    driver: local
+
+  grafana_data:
+    name: grafana_data
+    driver: local
+
+networks:
+  monitoring:
+    name: monitoring

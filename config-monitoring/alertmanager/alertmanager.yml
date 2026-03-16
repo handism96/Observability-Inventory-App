@@ -1,0 +1,22 @@
+global:
+  resolve_timeout: 5m
+
+route:
+  receiver: 'telegram'
+  group_wait: 10s
+  group_interval: 1m
+  repeat_interval: 1h
+
+receivers:
+  - name: 'telegram'
+    telegram_configs:
+      - bot_token: # Place your bot_token here
+        chat_id: # Place your chat id here
+        parse_mode: 'Markdown'
+        message: |
+          🚨 *Alert:* {{ .CommonLabels.alertname }}
+          *Status:* {{ .Status | toUpper }}
+          *Severity:* {{ .CommonLabels.severity }}
+          *Instance:* {{ .CommonLabels.instance }}
+          *Description:* {{ .CommonAnnotations.description }}
+          {{ if eq .Status "firing" }}🔥 Take action immediately!{{ end }}

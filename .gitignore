@@ -1,0 +1,28 @@
+*vendor
+*config/connection.php
+*phinx.php
+
+# Composer Dependencies
+/vendor/
+
+# Environment Variables (CRITICAL to ignore to prevent leaking secrets)
+.env
+.env.backup
+.env.local
+
+# Project-specific config files (already in your current .gitignore)
+config/connection.php
+phinx.php
+
+# IDEs and Editors
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Docker
+/db/data/ 
