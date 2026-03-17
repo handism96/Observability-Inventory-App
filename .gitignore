@@ -5,12 +5,12 @@
 # Composer Dependencies
 /vendor/
 
-# Environment Variables (CRITICAL to ignore to prevent leaking secrets)
+# Environment Variables
 .env
 .env.backup
 .env.local
 
-# Project-specific config files (already in your current .gitignore)
+# Project-specific config files
 config/connection.php
 phinx.php
 
