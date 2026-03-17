@@ -25,8 +25,8 @@ services:
     container_name: inventory_db
     restart: unless-stopped
     environment:
-      MYSQL_DATABASE: inventory_db
-      MYSQL_USER: inventory_user
+      MYSQL_DATABASE: ${DB_NAME}
+      MYSQL_USER: ${DB_USER}
       MYSQL_PASSWORD: ${DB_PASS}
       MYSQL_ROOT_PASSWORD: ${DB_ROOT_PASS}
     ports:
